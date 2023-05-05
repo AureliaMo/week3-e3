@@ -1,0 +1,88 @@
+---
+title: "week3-E3-demo"
+author: "AureliaMo"
+date: "2023-05-05"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercise 3
+
+## Demo
+
+libraries
+```{r}
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+```
+
+import data
+
+```{r}
+wildschwein <- read_delim("wildschwein_BE_2056.csv")
+wildschwein$TierName |> unique()
+
+wildschwein
+
+as.POSIXct("2015-07-03", tz = "UTC")
+
+sabi <- wildschwein |> 
+  filter(TierName == "Sabi") |> 
+  filter(DatetimeUTC >= as.POSIXct("2015-07-01", tz = "UTC"), DatetimeUTC < as.POSIXct("2015-07-03", tz = "UTC")) # wegen zeitzonen (2h verschiebung) falsch, deswegen as.POSIXct("2015-07-03", tz = "UTC") rattenschwanz
+
+sabi
+
+ggplot(sabi, aes(E, N, color = DatetimeUTC))+
+  geom_point()+
+  geom_path()+
+  coord_equal()
+
+sabi |> 
+  head(50) |> 
+  ggplot(aes(DatetimeUTC, 1))+
+  geom_point()
+
+sabi <- sabi |> 
+  mutate(
+    n_plus1 = sqrt((lead(E)-E)^2 + (lead(N)-N)^2),
+    n_plus2 = sqrt((lead(E,2)-E)^2 + (lead(N,2)-N)^2), # new offset of 2 in function lead()
+    n_minus1 = sqrt((lag(E)-E)^2 + (lag(N)-N)^2),
+    n_minus2 = sqrt((lag(E,2)-E)^2 + (lag(N,2)-N)^2)
+  )
+
+sabi <- sabi |>
+  rowwise() |>  # so the mean per row is computed
+  mutate(
+    stepmean = mean(c(n_plus1, n_plus2, n_minus1, n_minus2))
+  ) |> 
+  ungroup() # otherwise each row would represent a group, we don't want that
+
+ggplot(sabi, aes(stepmean))+
+  geom_histogram(binwidth = 10)+
+  geom_vline(xintercept = mean(sabi$stepmean, na.rm=TRUE))
+
+
+sabi <- sabi |> 
+  mutate(static = stepmean < mean(stepmean, na.rm = TRUE)) 
+
+
+ggplot(sabi, aes(E, N))+
+  geom_path()+
+  geom_point(aes(color = static))+
+  coord_fixed()
+
+sabi_filter <- sabi |> 
+  filter(!static) # select rows where the static value is not TRUE
+
+ggplot(sabi_filter, aes(E, N))+
+  geom_path()+
+  geom_point()+
+  coord_fixed()
+
+```
+

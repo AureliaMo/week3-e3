@@ -5,13 +5,7 @@ date: "2023-05-05"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Exercise 3
-
-## Demo
 
 libraries
 ```{r}
@@ -19,63 +13,56 @@ library(readr)
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(lubridate)
 
+library(sf)
+library(tmap)
 ```
 
-import data
+## Preparation
+
+import data and transform it to the coordinate system. 
 
 ```{r}
-wildschwein <- read_delim("wildschwein_BE_2056.csv")
-wildschwein$TierName |> unique()
+mydata <- read_delim("aurelia_dataset.csv", delim = ";")
 
-wildschwein
+# create datetime column
+mydata <- mydata |> 
+  mutate(Time = as.character(Time),
+         datetime = paste(Date,Time),
+         datetime = as.POSIXct(datetime, format = "%d.%m.%Y %X", tz="UTC"),
+         datetime = with_tz(datetime, tzone = "Europe/Berlin")
+         ) |> 
+  select(datetime, Latitude, Longitude)
 
-as.POSIXct("2015-07-03", tz = "UTC")
+# convert data to an sf object
+mydata <- st_as_sf(mydata, coords = c("Longitude", "Latitude"), crs = 4326, remove = FALSE) # EPSG code for WGS84 = 4326
 
-sabi <- wildschwein |> 
-  filter(TierName == "Sabi") |> 
-  filter(DatetimeUTC >= as.POSIXct("2015-07-01", tz = "UTC"), DatetimeUTC < as.POSIXct("2015-07-03", tz = "UTC")) # wegen zeitzonen (2h verschiebung) falsch, deswegen as.POSIXct("2015-07-03", tz = "UTC") rattenschwanz
+# convert data to coordinate system CH1903+ LV95
+mydata <- st_transform(mydata, crs = 2056) 
 
-sabi
+head(mydata)
+```
 
-ggplot(sabi, aes(E, N, color = DatetimeUTC))+
-  geom_point()+
-  geom_path()+
-  coord_equal()
+store the coordinates in separate columns, explore Data and filter one day
 
-sabi |> 
-  head(50) |> 
-  ggplot(aes(DatetimeUTC, 1))+
-  geom_point()
+```{r}
+# store the coordinates in separate columns
+mycoord <- st_coordinates(mydata)
 
-sabi <- sabi |> 
-  mutate(
-    n_plus1 = sqrt((lead(E)-E)^2 + (lead(N)-N)^2),
-    n_plus2 = sqrt((lead(E,2)-E)^2 + (lead(N,2)-N)^2), # new offset of 2 in function lead()
-    n_minus1 = sqrt((lag(E)-E)^2 + (lag(N)-N)^2),
-    n_minus2 = sqrt((lag(E,2)-E)^2 + (lag(N,2)-N)^2)
-  )
+mydata <- cbind(mydata, mycoord)
 
-sabi <- sabi |>
-  rowwise() |>  # so the mean per row is computed
-  mutate(
-    stepmean = mean(c(n_plus1, n_plus2, n_minus1, n_minus2))
-  ) |> 
-  ungroup() # otherwise each row would represent a group, we don't want that
+# explore Data
+tmap_mode("view")
+tm_shape(mydata)+
+  tm_dots()
 
-ggplot(sabi, aes(stepmean))+
-  geom_histogram(binwidth = 10)+
-  geom_vline(xintercept = mean(sabi$stepmean, na.rm=TRUE))
+# choose a single day for the next steps 
 
+oneday <- mydata |> 
+  filter(as.Date(datetime) == "2023-04-06")
 
-sabi |> 
-  mutate(static=stepmean < mean(stepmean, na.rm = TRUE)) |> 
-  ggplot(aes(E, N))+
-  geom_path()+
-  geom_point(aes(color = static))+
-  coord_fixed()
-  
-
+head(oneday)
 ```
 
 
