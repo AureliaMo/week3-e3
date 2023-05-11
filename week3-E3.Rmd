@@ -159,6 +159,8 @@ Visualize the moving segments by colourizing them by segment_ID.
 oneday <- oneday |> 
   filter(!static) # select rows where the static value is not TRUE to select the moving segments
 
+head(oneday)
+
 ggplot(oneday, aes(X, Y))+
   geom_point()+
   geom_path(aes(color=ID))+
@@ -169,5 +171,14 @@ ggplot(oneday, aes(X, Y))+
 
 Use segment_ID as a grouping variable to determine the segments duration and remove short segments (e.g. segments with a duration < 5 Minutes)
 
+```{r}
+oneday |>
+  
+  
+as.numeric(difftime(oneday$datetime[1], oneday$datetime[length(datetime)]))
+
+head(oneday)
+
+```
 
 
