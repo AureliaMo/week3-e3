@@ -262,14 +262,59 @@ traj6 <- pedestrian |>
   as.matrix()
 ```
 
-compute similarity measures
+compute similarity measures DTW, EditDist, Frechet and LCSS.
+compare trajectory 1 to trajectories 2 to 6.
 
 ```{r}
-DTW(traj1, traj2)
-DTW(traj1, traj3)
-DTW(traj1, traj4)
-DTW(traj1, traj5)
-DTW(traj1, traj6)
+DTW_comparison <- c(DTW(traj1, traj2),
+DTW(traj1, traj3),
+DTW(traj1, traj4),
+DTW(traj1, traj5),
+DTW(traj1, traj6))
+
+EditDistance_comparison <- c(EditDist(traj1, traj2, pointDistance = 20),
+EditDist(traj1, traj3),
+EditDist(traj1, traj4),
+EditDist(traj1, traj5),
+EditDist(traj1, traj6))
+
+Frechet_comparison <- c(Frechet(traj1, traj2, testLeash=-1),
+Frechet(traj1, traj3),
+Frechet(traj1, traj4),
+Frechet(traj1, traj5),
+Frechet(traj1, traj6))
+
+LCSS_comparison <- c(LCSS(traj1, traj2, pointSpacing=3, pointDistance=20, 
+     errorMarg=2, returnTrans=FALSE),
+LCSS(traj1, traj3, pointSpacing=3, pointDistance=20, 
+     errorMarg=2, returnTrans=FALSE),
+LCSS(traj1, traj4, pointSpacing=3, pointDistance=20, 
+     errorMarg=2, returnTrans=FALSE),
+LCSS(traj1, traj5, pointSpacing=3, pointDistance=20, 
+     errorMarg=2, returnTrans=FALSE),
+LCSS(traj1, traj6, pointSpacing=3, pointDistance=20, 
+     errorMarg=2, returnTrans=FALSE))
+
+comparison <- data.frame(DTW_comparison, EditDistance_comparison, Frechet_comparison, LCSS_comparison)
+comparison$traj <- c(1,2,3,4,5)
+
+head(comparison)
+
+
+
+ggplot(comparison, aes(traj, DTW_comparison, fill=traj))+
+  geom_bar(stat = "identity")
+
+ggplot(comparison, aes(traj, EditDistance_comparison, fill=traj))+
+  geom_bar(stat = "identity")
+
+ggplot(comparison, aes(traj, Frechet_comparison, fill=traj))+
+  geom_bar(stat = "identity")
+
+ggplot(comparison, aes(traj, LCSS_comparison, fill=traj))+
+  geom_bar(stat = "identity")
+
+
 
 ```
 
