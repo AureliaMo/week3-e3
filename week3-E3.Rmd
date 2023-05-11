@@ -175,18 +175,33 @@ Use segment_ID as a grouping variable to determine the segments duration and rem
 
 ```{r}
 
-# oneday$datetime[1]
-# oneday$datetime[length(oneday$datetime)]
-# 
-#   
-# as.numeric(difftime(oneday$datetime[1], oneday$datetime[length(oneday$datetime)]))
-# 
-# oneday |> 
-#   group_by(ID) |> 
-#   as.numeric(difftime(datetime[length(datetime)], datetime[1]))
-# 
-# head(oneday)
-# haven't found out why it doesn't work yet
+oneday$datetime[1]
+oneday$datetime[length(oneday$datetime)]
+
+
+as.numeric(difftime(oneday$datetime[1], oneday$datetime[length(oneday$datetime)]))
+
+long <- oneday |>
+  group_by(ID) |>
+  filter(as.numeric(difftime(datetime[length(datetime)], datetime[1])) > 5)
+
+ggplot(long, aes(X, Y))+
+  geom_point()+
+  geom_path(aes(color=ID))+
+  coord_fixed()
+
+# probably the trajectories overlap because the path along the lake is the same but cycled back and forth
+
+short <- oneday |>
+  group_by(ID) |>
+  filter(as.numeric(difftime(datetime[length(datetime)], datetime[1])) < 5)
+
+ggplot(short, aes(X, Y))+
+  geom_point()+
+  geom_path(aes(color=ID))+
+  coord_fixed()
+
+# the short trajectories can be seen in the plot above.
 
 ```
 
@@ -295,6 +310,11 @@ LCSS(traj1, traj5, pointSpacing=3, pointDistance=20,
 LCSS(traj1, traj6, pointSpacing=3, pointDistance=20, 
      errorMarg=2, returnTrans=FALSE))
 
+```
+
+visualize the results
+
+```{r}
 comparison <- data.frame(DTW_comparison, EditDistance_comparison, Frechet_comparison, LCSS_comparison)
 comparison$traj <- c(1,2,3,4,5)
 
