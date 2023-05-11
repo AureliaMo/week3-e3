@@ -111,6 +111,7 @@ ggplot(oneday, aes(stepmean))+
 
 
 Step c): Remove “static points”
+I walked the last bit from Waedenswil bahnhof to the campus, and there were some steep parts on the way to Oerlikon, where i moved slower. Also, I stopped sometimes to check the directions and wait for my friends. 
 
 ```{r}
 oneday <- oneday |> 
@@ -129,5 +130,7 @@ ggplot(oneday_filter, aes(X, Y))+
   geom_path()+
   geom_point()+
   coord_fixed()
+
+# looks ok, i see my stops or slower parts represented with the segmentation
 ```
 
