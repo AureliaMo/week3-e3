@@ -302,19 +302,19 @@ head(comparison)
 
 
 
-ggplot(comparison, aes(traj, DTW_comparison, fill=traj))+
-  geom_bar(stat = "identity")
+cowplot::plot_grid(
+  ggplot(comparison, aes(traj, DTW_comparison, fill=traj))+
+  geom_bar(stat = "identity"),
 
 ggplot(comparison, aes(traj, EditDistance_comparison, fill=traj))+
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity"),
 
 ggplot(comparison, aes(traj, Frechet_comparison, fill=traj))+
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity"),
 
 ggplot(comparison, aes(traj, LCSS_comparison, fill=traj))+
   geom_bar(stat = "identity")
-
-
+)
 
 ```
 
