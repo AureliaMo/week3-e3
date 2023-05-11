@@ -44,7 +44,7 @@ mydata <- st_transform(mydata, crs = 2056)
 head(mydata)
 ```
 
-store the coordinates in separate columns, explore Data and filter one day
+store the coordinates in separate columns, explore Data and filter the day i cycled to Waedenswil
 
 ```{r}
 # store the coordinates in separate columns
@@ -63,6 +63,71 @@ oneday <- mydata |>
   filter(as.Date(datetime) == "2023-04-06")
 
 head(oneday)
+tm_shape(oneday)+
+  tm_dots()
 ```
 
+
+## Task 1 Segmentation
+
+Step a): Specify a temporal window 
+I was riding my bike and the sampling interval was 5 seconds. If i didn't move for more than 20 secs, i probably waited at a red light, or for my friends to join me, or to check where i hat do go. So i set my temporal window to 20 secs and therefore to four fixes
+
+```{r}
+
+# pos[n-2] to pos[n]
+# pos[n-1] to pos[n]
+# pos[n] to pos[n+1]
+# pos[n] to pos[n+2]
+
+```
+
+
+Step b): Measure the distance from every point to every other point within this temporal window. Calculate the mean distance between the points. 
+
+```{r}
+
+oneday <- oneday |> 
+  mutate(
+    n_plus1 = sqrt((lead(X)-X)^2 + (lead(Y)-Y)^2),
+    n_plus2 = sqrt((lead(X,2)-X)^2 + (lead(Y,2)-Y)^2), # new offset of 2 in function lead()
+    n_minus1 = sqrt((lag(X)-X)^2 + (lag(Y)-Y)^2),
+    n_minus2 = sqrt((lag(X,2)-X)^2 + (lag(Y,2)-Y)^2)
+  )
+
+oneday <- oneday |>
+  rowwise() |>  # so the mean per row is computed
+  mutate(
+    stepmean = mean(c(n_plus1, n_plus2, n_minus1, n_minus2))
+  ) |> 
+  ungroup() # otherwise each row would represent a group, we don't want that
+
+# how is the distribution? 
+
+ggplot(oneday, aes(stepmean))+
+  geom_histogram(binwidth = 5)+
+  geom_vline(xintercept = mean(oneday$stepmean, na.rm=TRUE))
+```
+
+
+Step c): Remove “static points”
+
+```{r}
+oneday <- oneday |> 
+  mutate(static = stepmean < mean(stepmean, na.rm = TRUE)) 
+
+
+ggplot(oneday, aes(X, Y))+
+  geom_path()+
+  geom_point(aes(color = static))+
+  coord_fixed()
+
+oneday_filter <- oneday |> 
+  filter(!static) # select rows where the static value is not TRUE
+
+ggplot(oneday_filter, aes(X, Y))+
+  geom_path()+
+  geom_point()+
+  coord_fixed()
+```
 
