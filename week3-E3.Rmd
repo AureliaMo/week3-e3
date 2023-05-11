@@ -73,14 +73,11 @@ tm_shape(oneday)+
 Step a): Specify a temporal window 
 I was riding my bike and the sampling interval was 5 seconds. If i didn't move for more than 20 secs, i probably waited at a red light, or for my friends to join me, or to check where i hat do go. So i set my temporal window to 20 secs and therefore to four fixes
 
-```{r}
+ pos[n-2] to pos[n]
+ pos[n-1] to pos[n]
+ pos[n] to pos[n+1]
+ pos[n] to pos[n+2]
 
-# pos[n-2] to pos[n]
-# pos[n-1] to pos[n]
-# pos[n] to pos[n+1]
-# pos[n] to pos[n+2]
-
-```
 
 
 Step b): Measure the distance from every point to every other point within this temporal window. Calculate the mean distance between the points. 
@@ -102,35 +99,75 @@ oneday <- oneday |>
   ) |> 
   ungroup() # otherwise each row would represent a group, we don't want that
 
-# how is the distribution? 
+```
+
+## Task 2: Specify and apply threshold d
+
+exploring the euclidean distance values. how is the distribution? 
+```{r}
 
 ggplot(oneday, aes(stepmean))+
   geom_histogram(binwidth = 5)+
   geom_vline(xintercept = mean(oneday$stepmean, na.rm=TRUE))
+
+# the distribution shows two peaks. one at lower mean steplength (5 m) and one around mean steplengths of 50m. Segmenting by the mean of the values seems reasonable. 
+
 ```
 
+We use the mean of all stepmean values to separate moves from static points. Store the new information (boolean to differentiate between stops (TRUE) and moves (FALSE)) in a new column named static.
 
-Step c): Remove “static points”
-I walked the last bit from Waedenswil bahnhof to the campus, and there were some steep parts on the way to Oerlikon, where i moved slower. Also, I stopped sometimes to check the directions and wait for my friends. 
-
-```{r}
+````{r}
 oneday <- oneday |> 
   mutate(static = stepmean < mean(stepmean, na.rm = TRUE)) 
 
+```
 
+
+## Task 3: Visualize segmented trajectories
+
+```{r}
 ggplot(oneday, aes(X, Y))+
   geom_path()+
   geom_point(aes(color = static))+
   coord_fixed()
+```
 
-oneday_filter <- oneday |> 
-  filter(!static) # select rows where the static value is not TRUE
+I walked the last bit from Waedenswil bahnhof to the campus, and there were some steep parts on the way to Oerlikon, where i moved slower. Also, I stopped sometimes to check the directions and wait for my friends. The visualisation represents my stops adequately i think.
 
-ggplot(oneday_filter, aes(X, Y))+
-  geom_path()+
+
+## Task 4 Segment-based analysis
+
+assign unique IDs to the segments
+
+```{r}
+# function for assigning unique ID to the subtrajectories
+
+rle_id <- function(vec) {
+    x <- rle(vec)$lengths
+    as.factor(rep(seq_along(x), times = x))
+}
+
+oneday <- oneday |> 
+  mutate(ID=rle_id(static))
+
+head(oneday)
+```
+
+Visualize the moving segments by colourizing them by segment_ID.
+```{r}
+
+oneday <- oneday |> 
+  filter(!static) # select rows where the static value is not TRUE to select the moving segments
+
+ggplot(oneday, aes(X, Y))+
   geom_point()+
+  geom_path(aes(color=ID))+
   coord_fixed()
 
-# looks ok, i see my stops or slower parts represented with the segmentation
+# gosh, i have many different segments!
 ```
+
+Use segment_ID as a grouping variable to determine the segments duration and remove short segments (e.g. segments with a duration < 5 Minutes)
+
+
 
