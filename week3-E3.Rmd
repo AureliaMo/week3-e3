@@ -17,6 +17,8 @@ library(lubridate)
 
 library(sf)
 library(tmap)
+
+library(SimilarityMeasures)
 ```
 
 ## Preparation
@@ -172,13 +174,102 @@ ggplot(oneday, aes(X, Y))+
 Use segment_ID as a grouping variable to determine the segments duration and remove short segments (e.g. segments with a duration < 5 Minutes)
 
 ```{r}
-oneday |>
-  
-  
-as.numeric(difftime(oneday$datetime[1], oneday$datetime[length(datetime)]))
 
-head(oneday)
+# oneday$datetime[1]
+# oneday$datetime[length(oneday$datetime)]
+# 
+#   
+# as.numeric(difftime(oneday$datetime[1], oneday$datetime[length(oneday$datetime)]))
+# 
+# oneday |> 
+#   group_by(ID) |> 
+#   as.numeric(difftime(datetime[length(datetime)], datetime[1]))
+# 
+# head(oneday)
+# haven't found out why it doesn't work yet
 
 ```
 
+
+
+## Task 5: Similarity measures
+
+import and explore
+```{r}
+
+pedestrian <- read_csv("pedestrian.csv")
+head(pedestrian)
+
+ggplot(pedestrian, aes(E, N))+
+  geom_point(aes(color = TrajID))+
+  geom_path(aes(color = TrajID))+
+  facet_wrap(~ TrajID, nrow = 2)+
+  theme_minimal()
+```
+
+
+## Task 6: Calculate similarity
+
+install package, familiarize
+```{r}
+# install.packages("SimilarityMeasures")
+
+  help(package = "SimilarityMeasures")
+
+```
+
+Now compare trajectory 1 to trajectories 2-6 using different similarity measures from the package. Your options are. DTW, EditDist, Frechet and LCSS.
+Before visualizing your results think about the following: Which two trajectories to you percieve to be most similar, which are most dissimilar? hmm... Trajectory 3 and 6 look very similar to me. Trajectory 4 looks very dissimilar to all the others.
+
+Now visualize the results from the computed similarity measures.
+First, i need to create one matrix for every trajectory.
+
+```{r}
+# is the datetime column relevant? according to the input examples of the functions description i think not. 
+
+pedestrian <- pedestrian |> 
+  select(-DatetimeUTC)
+
+
+traj1 <- pedestrian |> 
+  filter(TrajID==1) |> 
+  select(-TrajID) |> 
+  as.matrix()
+  
+traj2 <- pedestrian |> 
+  filter(TrajID==2) |> 
+  select(-TrajID) |> 
+  as.matrix()
+
+traj3 <- pedestrian |> 
+  filter(TrajID==3) |> 
+  select(-TrajID) |> 
+  as.matrix()
+
+traj4 <- pedestrian |> 
+  filter(TrajID==4) |> 
+  select(-TrajID) |> 
+  as.matrix()
+
+traj5 <- pedestrian |> 
+  filter(TrajID==5) |> 
+  select(-TrajID) |> 
+  as.matrix()
+
+traj6 <- pedestrian |> 
+  filter(TrajID==6) |> 
+  select(-TrajID) |> 
+  as.matrix()
+```
+
+compute similarity measures
+
+```{r}
+DTW(traj1, traj2)
+DTW(traj1, traj3)
+DTW(traj1, traj4)
+DTW(traj1, traj5)
+DTW(traj1, traj6)
+
+```
 
